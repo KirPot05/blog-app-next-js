@@ -3,7 +3,7 @@ import Link from "next/link"
 
 function Header() {
   return (
-    <header className="sticky top-0 bg-white flex items-center justify-between p-5 max-w-7xl mx-auto">
+    <header className="sticky top-0 z-10 bg-white flex items-center justify-between p-5 max-w-7xl mx-auto">
         <div className="flex items-center space-x-5">
             <Link href="/">
                 <img className="w-44 object-contain cursor-pointer" src="https://links.papareact.com/yvf" alt="" />
