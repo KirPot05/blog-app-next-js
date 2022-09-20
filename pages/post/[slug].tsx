@@ -1,4 +1,5 @@
 import { GetStaticProps } from 'next';
+import Head from 'next/head';
 import Header from '../../components/Header';
 import {sanityClient, urlFor} from '../../sanity';
 import { Post } from '../../types';
@@ -9,8 +10,16 @@ type Props = {
 
 function Post({post}: Props) {
   return (
-    <main>
+    <main className='max-w-7xl mx-auto'>
+        <Head>
+            <title>{post.title} | Medium</title>
+        </Head>
+
         <Header/>
+
+        <div>
+            <img className='w-full h-60 object-cover' src={urlFor(post.mainImage).url()} alt="" />
+        </div>
     </main>
   )
 }
@@ -18,7 +27,7 @@ function Post({post}: Props) {
 export default Post;
 
 export const getStaticPaths = async ()=> {
-    const query = `*[type="post"]{
+    const query = `*[_type == "post"]{
         _id,
         slug {
             current
@@ -40,7 +49,8 @@ export const getStaticPaths = async ()=> {
 }
 
 export const getStaticProps: GetStaticProps = async ({params}) => {
-    const query = `*[_type == "post" && slug.current == "my-third-post"][0]{
+
+    const query = `*[_type == "post" && slug.current == $slug][0]{
         _id,
         title, 
         author -> {
@@ -66,6 +76,7 @@ export const getStaticProps: GetStaticProps = async ({params}) => {
     return {
         props: {
             post,
-        }
+        },
+        revalidate: 120 // Updates old cached version of page after 60s
     }
 }
