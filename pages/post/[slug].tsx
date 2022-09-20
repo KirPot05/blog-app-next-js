@@ -3,25 +3,65 @@ import Head from 'next/head';
 import Header from '../../components/Header';
 import {sanityClient, urlFor} from '../../sanity';
 import { Post } from '../../types';
+import PortableText from 'react-portable-text';
 
 type Props = {
     post: Post;
 }
 
 function Post({post}: Props) {
-  return (
-    <main className='max-w-7xl mx-auto'>
-        <Head>
-            <title>{post.title} | Medium</title>
-        </Head>
 
-        <Header/>
+    return (
+        <main className='max-w-7xl mx-auto'>
+            <Head>
+                <title>{post.title} | Medium</title>
+            </Head>
 
-        <div>
+            <Header/>
+
             <img className='w-full h-60 object-cover' src={urlFor(post.mainImage).url()} alt="" />
-        </div>
-    </main>
-  )
+
+            <article className='max-w-3xl mx-auto p-4'>
+                <h1 className='text-3xl lg:text-4xl mt-10 mb-3 font-bold'> {post.title} </h1>
+                <h2 className='text-xl font-light text-gray-500 mb-2'> {post.description} </h2>
+
+                <div className='flex items-center space-x-4 mt-5'>
+                    <img className='h-10 w-10 rounded-full object-cover' src={urlFor(post.author.image).url()} alt="" />
+                    <p className='font-extralight text-sm tracking-wide'> Blog post by <span className='text-green-600'> {post.author.name} </span> | Published on {new Date(post._createdAt).toDateString()} </p>
+                </div>
+
+                <div className='mt-10'>
+                    <PortableText
+                        dataset={process.env.NEXT_PUBLIC_SANITY_DATASET}
+                        projectId={process.env.NEXT_PUBLIC_SANITY_PROJECT_ID}
+                        content={post.body}
+                        serializers={
+                            {
+                                h1: (props: any) => (
+                                <h1 className='text-2xl font-bold my-5' {...props} />
+                                ),
+
+                                h2: (props: any) => (
+                                    <h2 className='text-xl font-bold my-5' {...props} />
+                                ),
+
+                                li: (props: any) => (
+                                    <li className='ml-4 list-disc' {...props}/>
+                                ),
+
+                                link: ({href, children}: any) => (
+                                    <a href={href} className="text-blue-500 hover:underline">
+                                        {children}
+                                    </a>
+                                ),
+                            }
+                        }
+                    />
+                </div>
+            </article>
+
+      </main>
+    )
 }
 
 export default Post;
@@ -52,6 +92,7 @@ export const getStaticProps: GetStaticProps = async ({params}) => {
 
     const query = `*[_type == "post" && slug.current == $slug][0]{
         _id,
+        _createdAt,
         title, 
         author -> {
             name, 
