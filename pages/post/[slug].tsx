@@ -1,7 +1,7 @@
 import { GetStaticProps } from 'next';
 import Head from 'next/head';
 import Header from '../../components/Header';
-import {sanityClient, urlFor} from '../../sanity';
+import { sanityClient, urlFor } from '../../sanity';
 import { Post } from '../../types';
 import PortableText from 'react-portable-text';
 import { useForm, SubmitHandler } from 'react-hook-form';
@@ -17,17 +17,25 @@ type InputFormTypes = {
     comment: string;
 }
 
-function Post({post}: Props) {
+function Post({ post }: Props) {
 
-    const { register, handleSubmit, formState: {errors} } = useForm<InputFormTypes>();
+    const { register, handleSubmit, formState: { errors } } = useForm<InputFormTypes>();
 
     const postComment: SubmitHandler<InputFormTypes> = async (data) => {
-        try{
+        try {
             const res = await fetch('/api/comments/create', {
                 method: 'POST',
+                headers: {
+                    'Content-Type': "application/json"
+                },
                 body: JSON.stringify(data)
-            })
-        } catch(err){
+            });
+
+            const resp = await res.json();
+            if(!resp.success) throw new Error(resp.message);
+
+            alert(resp.message);
+        } catch (err) {
             console.log(err);
         }
     }
@@ -38,7 +46,7 @@ function Post({post}: Props) {
                 <title>{post.title} | Medium</title>
             </Head>
 
-            <Header/>
+            <Header />
 
             <img className='w-full h-60 object-cover' src={urlFor(post.mainImage).url()} alt="" />
 
@@ -59,7 +67,7 @@ function Post({post}: Props) {
                         serializers={
                             {
                                 h1: (props: any) => (
-                                <h1 className='text-2xl font-bold my-5' {...props} />
+                                    <h1 className='text-2xl font-bold my-5' {...props} />
                                 ),
 
                                 h2: (props: any) => (
@@ -67,10 +75,10 @@ function Post({post}: Props) {
                                 ),
 
                                 li: (props: any) => (
-                                    <li className='ml-4 list-disc' {...props}/>
+                                    <li className='ml-4 list-disc' {...props} />
                                 ),
 
-                                link: ({href, children}: any) => (
+                                link: ({ href, children }: any) => (
                                     <a href={href} className="text-blue-500 hover:underline">
                                         {children}
                                     </a>
@@ -87,22 +95,22 @@ function Post({post}: Props) {
                 <h3 className='text-sm text-yellow-500'> Enjoyed this article? </h3>
                 <h2 className='text-3xl font-bold'> Leave a comment below! </h2>
                 <hr className='py-3 mt-2' />
-                
+
                 <input {...register("_id")} type="hidden" name='_id' value={post._id} />
 
                 <label className='flex flex-col mb-5 space-y-2'>
                     <span className='text-gray-700'>Name</span>
-                    <input {...register("name", {required: true})} name="name" placeholder='Enter your name' type="text" className='p-2 shadow border rounded outline-none focus:ring-2 ring-yellow-500' />
+                    <input {...register("name", { required: true })} name="name" placeholder='Enter your name' type="text" className='p-2 shadow border rounded outline-none focus:ring-2 ring-yellow-500' />
                 </label>
 
                 <label className='flex flex-col mb-5 space-y-2'>
                     <span className='text-gray-700'>Email</span>
-                    <input {...register("email", {required: true})} name="email" placeholder='example@sample.com' type='email' className='p-2 shadow border rounded outline-none focus:ring-2 ring-yellow-500' />
+                    <input {...register("email", { required: true })} name="email" placeholder='example@sample.com' type='email' className='p-2 shadow border rounded outline-none focus:ring-2 ring-yellow-500' />
                 </label>
-                
+
                 <label className='flex flex-col mb-5 space-y-2'>
                     <span className='text-gray-700'>Comment</span>
-                    <textarea {...register("comment", {required: true})} name="comment" placeholder='Enter your views...' className='p-2 shadow border rounded outline-none  focus:ring-2 ring-yellow-500' cols={50} rows={5}></textarea>
+                    <textarea {...register("comment", { required: true })} name="comment" placeholder='Enter your views...' className='p-2 shadow border rounded outline-none  focus:ring-2 ring-yellow-500' cols={50} rows={5}></textarea>
                 </label>
 
                 {/* Errors after validation of input data */}
@@ -115,19 +123,19 @@ function Post({post}: Props) {
                 <input type="submit" className='shadow text-lg bg-yellow-500 hover:bg-yellow-400 focus:shadow-outline focus:outline-none text-white font-semibold py-2 px-4 rounded cursor-pointer' value="Submit" />
             </form>
 
-      </main>
+        </main>
     )
 }
 
 export default Post;
 
-export const getStaticPaths = async ()=> {
+export const getStaticPaths = async () => {
     const query = `*[_type == "post"]{
         _id,
         slug {
             current
         }
-    }`    
+    }`
 
     const posts = await sanityClient.fetch(query);
 
@@ -138,12 +146,12 @@ export const getStaticPaths = async ()=> {
     }))
 
     return {
-        paths, 
+        paths,
         fallback: 'blocking'
     }
 }
 
-export const getStaticProps: GetStaticProps = async ({params}) => {
+export const getStaticProps: GetStaticProps = async ({ params }) => {
 
     const query = `*[_type == "post" && slug.current == $slug][0]{
         _id,
@@ -163,7 +171,7 @@ export const getStaticProps: GetStaticProps = async ({params}) => {
         slug: params?.slug
     });
 
-    if(!post) {
+    if (!post) {
         return {
             notFound: true
         }
