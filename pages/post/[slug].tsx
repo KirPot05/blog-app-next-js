@@ -5,6 +5,7 @@ import { sanityClient, urlFor } from '../../sanity';
 import { Post } from '../../types';
 import PortableText from 'react-portable-text';
 import { useForm, SubmitHandler } from 'react-hook-form';
+import { useState } from 'react';
 
 type Props = {
     post: Post;
@@ -18,11 +19,13 @@ type InputFormTypes = {
 }
 
 function Post({ post }: Props) {
-
+    console.log(post)
+    const [submitted, setSubmitted] = useState(false);
     const { register, handleSubmit, formState: { errors } } = useForm<InputFormTypes>();
 
     const postComment: SubmitHandler<InputFormTypes> = async (data) => {
         try {
+            setSubmitted(false);
             const res = await fetch('/api/comments/create', {
                 method: 'POST',
                 headers: {
@@ -33,10 +36,11 @@ function Post({ post }: Props) {
 
             const resp = await res.json();
             if(!resp.success) throw new Error(resp.message);
-
+            setSubmitted(true);
             alert(resp.message);
         } catch (err) {
             console.log(err);
+            setSubmitted(false);
         }
     }
 
@@ -91,38 +95,57 @@ function Post({ post }: Props) {
 
             <hr className='max-w-lg my-5 mx-auto border border-yellow-500' />
 
-            <form onSubmit={handleSubmit(postComment)} className='flex flex-col p-5 max-w-2xl mx-auto mb-10'>
-                <h3 className='text-sm text-yellow-500'> Enjoyed this article? </h3>
-                <h2 className='text-3xl font-bold'> Leave a comment below! </h2>
-                <hr className='py-3 mt-2' />
+            {
+                submitted ? (
+                    <div className='flex flex-col p-10 my-10 bg-yellow-500 text-white max-w-2xl mx-auto'>
+                        <h3 className='text-3xl font-bold'>Thank you posting!</h3>
+                        <p>Once it's approved it will be shown below!</p>
+                    </div>
+                ):(
+                <form onSubmit={handleSubmit(postComment)} className='flex flex-col p-5 max-w-2xl mx-auto mb-10'>
+                    <h3 className='text-sm text-yellow-500'> Enjoyed this article? </h3>
+                    <h2 className='text-3xl font-bold'> Leave a comment below! </h2>
+                    <hr className='py-3 mt-2' />
 
-                <input {...register("_id")} type="hidden" name='_id' value={post._id} />
+                    <input {...register("_id")} type="hidden" name='_id' value={post._id} />
 
-                <label className='flex flex-col mb-5 space-y-2'>
-                    <span className='text-gray-700'>Name</span>
-                    <input {...register("name", { required: true })} name="name" placeholder='Enter your name' type="text" className='p-2 shadow border rounded outline-none focus:ring-2 ring-yellow-500' />
-                </label>
+                    <label className='flex flex-col mb-5 space-y-2'>
+                        <span className='text-gray-700'>Name</span>
+                        <input {...register("name", { required: true })} name="name" placeholder='Enter your name' type="text" className='p-2 shadow border rounded outline-none focus:ring-2 ring-yellow-500' />
+                    </label>
 
-                <label className='flex flex-col mb-5 space-y-2'>
-                    <span className='text-gray-700'>Email</span>
-                    <input {...register("email", { required: true })} name="email" placeholder='example@sample.com' type='email' className='p-2 shadow border rounded outline-none focus:ring-2 ring-yellow-500' />
-                </label>
+                    <label className='flex flex-col mb-5 space-y-2'>
+                        <span className='text-gray-700'>Email</span>
+                        <input {...register("email", { required: true })} name="email" placeholder='example@sample.com' type='email' className='p-2 shadow border rounded outline-none focus:ring-2 ring-yellow-500' />
+                    </label>
 
-                <label className='flex flex-col mb-5 space-y-2'>
-                    <span className='text-gray-700'>Comment</span>
-                    <textarea {...register("comment", { required: true })} name="comment" placeholder='Enter your views...' className='p-2 shadow border rounded outline-none  focus:ring-2 ring-yellow-500' cols={50} rows={5}></textarea>
-                </label>
+                    <label className='flex flex-col mb-5 space-y-2'>
+                        <span className='text-gray-700'>Comment</span>
+                        <textarea {...register("comment", { required: true })} name="comment" placeholder='Enter your views...' className='p-2 shadow border rounded outline-none  focus:ring-2 ring-yellow-500' cols={50} rows={5}></textarea>
+                    </label>
 
-                {/* Errors after validation of input data */}
-                <div className='p-2 space-y-3 mb-3'>
-                    {errors.name && <p className='text-red-500 text-sm'> Name field is required </p>}
-                    {errors.email && <p className='text-red-500 text-sm'> Email is required </p>}
-                    {errors.comment && <p className='text-red-500 text-sm'> Comment is required </p>}
+                    {/* Errors after validation of input data */}
+                    <div className='p-2 space-y-3 mb-3'>
+                        {errors.name && <p className='text-red-500 text-sm'> Name field is required </p>}
+                        {errors.email && <p className='text-red-500 text-sm'> Email is required </p>}
+                        {errors.comment && <p className='text-red-500 text-sm'> Comment is required </p>}
+                    </div>
+
+                    <input type="submit" disabled={submitted} className={`shadow text-lg  focus:shadow-outline focus:outline-none text-white font-semibold py-2 px-4 rounded bg-yellow-500 hover:bg-yellow-400 cursor-pointer" }`}  value="Submit" />
+                </form>)}
+                
+                {/* Comments */}
+                <div className='flex flex-col p-10 my-10 max-w-2xl mx-auto shadow-lg space-y-2 border'>
+                    <h3 className='text-4xl font-bold'>Comments</h3>
+                    <hr className='mb-2 bg-gray-100' />
+                    <div className='space-y-3'>
+                        {post.comments.map((comment) => (
+                            <div key={comment._id}>
+                                <p> <span className='text-yellow-600'>{comment.name}</span>: {comment.comment}</p>
+                            </div>
+                        ))}
+                    </div>
                 </div>
-
-                <input type="submit" className='shadow text-lg bg-yellow-500 hover:bg-yellow-400 focus:shadow-outline focus:outline-none text-white font-semibold py-2 px-4 rounded cursor-pointer' value="Submit" />
-            </form>
-
         </main>
     )
 }
@@ -161,6 +184,9 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
             name, 
             image
         },
+        "comments": *[
+            _type == "comment" && post._ref == ^._id && approved == true
+        ],
         description, 
         mainImage,
         slug, 
